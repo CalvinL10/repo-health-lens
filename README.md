@@ -50,13 +50,14 @@ The 100 available points are intentionally easy to audit:
 | License and security | 15 |
 | Original project signal | 5 |
 
-This early version only checks repository-level signals. It does not inspect
-source code, judge the quality of a README, or reward stars. Those limitations
-are deliberate: popularity is not the same as health.
+This early version only checks repository-level signals. For engineering
+signals, a repository must expose at least one `.yml` or `.yaml` file directly
+under `.github/workflows`; an unrelated `.github` directory is not treated as
+CI. It does not inspect source code, judge the quality of a README, or reward
+stars. Those limitations are deliberate: popularity is not the same as health.
 
 ## Roadmap
 
-- inspect workflow files instead of treating `.github` as a CI signal;
 - report issue and pull-request responsiveness;
 - support saved snapshots and score trends;
 - generate a standalone HTML report;

@@ -20,6 +20,7 @@ class RepositorySnapshot:
     topics: tuple[str, ...]
     has_wiki: bool
     files: frozenset[str]
+    workflow_files: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)

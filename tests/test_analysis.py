@@ -33,6 +33,7 @@ def snapshot(**overrides):
                 ".github",
             }
         ),
+        "workflow_files": ("ci.yml",),
     }
     values.update(overrides)
     return RepositorySnapshot(**values)
@@ -55,6 +56,7 @@ class AnalysisTests(unittest.TestCase):
                 topics=(),
                 has_wiki=False,
                 files=frozenset(),
+                workflow_files=(),
             ),
             now=NOW,
         )
@@ -68,3 +70,15 @@ class AnalysisTests(unittest.TestCase):
             snapshot(pushed_at="2024-01-01T00:00:00Z"), now=NOW
         )
         self.assertGreater(recent.score, stale.score)
+
+    def test_github_directory_without_workflow_does_not_count_as_ci(self):
+        report = analyze_repository(
+            snapshot(files=frozenset({".github", "tests"}), workflow_files=()),
+            now=NOW,
+        )
+
+        engineering = next(
+            check for check in report.checks if check.key == "engineering"
+        )
+        self.assertEqual(engineering.score, 10)
+        self.assertIn("workflow files=0", engineering.evidence)

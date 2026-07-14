@@ -56,7 +56,7 @@ def analyze_repository(
         snapshot.files, ("code_of_conduct.md", "code-of-conduct.md")
     )
     has_tests = "tests" in snapshot.files or "test" in snapshot.files
-    has_ci = ".github" in snapshot.files
+    has_workflows = bool(snapshot.workflow_files)
     has_security = "security.md" in snapshot.files
 
     docs_score = (
@@ -69,7 +69,7 @@ def analyze_repository(
         + (5 if has_code_of_conduct else 0)
         + (3 if snapshot.has_wiki else 0)
     )
-    engineering_score = (10 if has_tests else 0) + (10 if has_ci else 0)
+    engineering_score = (10 if has_tests else 0) + (10 if has_workflows else 0)
     governance_score = (10 if snapshot.license_name else 0) + (
         5 if has_security else 0
     )
@@ -104,8 +104,10 @@ def analyze_repository(
             "Engineering signals",
             engineering_score,
             20,
-            f"Tests={has_tests}, GitHub configuration={has_ci}.",
-            None if engineering_score == 20 else "Add automated tests and CI.",
+            f"Tests={has_tests}, workflow files={len(snapshot.workflow_files)}.",
+            None
+            if engineering_score == 20
+            else "Add automated tests and a GitHub Actions workflow.",
         ),
         CheckResult(
             "governance",

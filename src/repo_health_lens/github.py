@@ -18,7 +18,7 @@ class GitHubClient:
         self.token = token or os.getenv("GITHUB_TOKEN")
         self.timeout = timeout
 
-    def _get(self, path: str) -> Any:
+    def _get(self, path: str, *, allow_not_found: bool = False) -> Any:
         headers = {
             "Accept": "application/vnd.github+json",
             "User-Agent": "repo-health-lens/0.1",
@@ -33,6 +33,8 @@ class GitHubClient:
             with urllib.request.urlopen(request, timeout=self.timeout) as response:
                 return json.load(response)
         except urllib.error.HTTPError as exc:
+            if allow_not_found and exc.code == 404:
+                return None
             detail = exc.read().decode("utf-8", errors="replace")
             try:
                 message = json.loads(detail).get("message", detail)
@@ -45,10 +47,23 @@ class GitHubClient:
     def snapshot(self, owner: str, repo: str) -> RepositorySnapshot:
         metadata = self._get(f"/repos/{owner}/{repo}")
         contents = self._get(f"/repos/{owner}/{repo}/contents")
+        workflow_contents = self._get(
+            f"/repos/{owner}/{repo}/contents/.github/workflows",
+            allow_not_found=True,
+        ) or ()
         files = frozenset(
             str(item.get("name", "")).lower()
             for item in contents
             if isinstance(item, dict)
+        )
+        workflow_files = tuple(
+            sorted(
+                str(item.get("name", "")).lower()
+                for item in workflow_contents
+                if isinstance(item, dict)
+                and item.get("type") == "file"
+                and str(item.get("name", "")).lower().endswith((".yml", ".yaml"))
+            )
         )
         license_data = metadata.get("license") or {}
         return RepositorySnapshot(
@@ -66,5 +81,6 @@ class GitHubClient:
             topics=tuple(metadata.get("topics") or ()),
             has_wiki=bool(metadata.get("has_wiki")),
             files=files,
+            workflow_files=workflow_files,
         )
 
