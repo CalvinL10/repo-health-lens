@@ -1,0 +1,29 @@
+[build-system]
+requires = ["hatchling>=1.26"]
+build-backend = "hatchling.build"
+
+[project]
+name = "repo-health-lens"
+version = "0.1.0"
+description = "Explainable GitHub repository health checks from public metadata."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Calvin" }]
+keywords = ["github", "open-source", "repository", "health-check"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+]
+
+[project.scripts]
+repo-health-lens = "repo_health_lens.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/repo_health_lens"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+
