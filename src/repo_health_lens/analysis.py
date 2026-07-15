@@ -28,6 +28,61 @@ def _grade(score: int) -> str:
     return "F"
 
 
+def _responsiveness(snapshot: RepositorySnapshot, now: datetime) -> tuple[int, str, str | None]:
+    items = snapshot.issue_activity
+    if not items:
+        return (
+            0,
+            "No issue or pull-request activity was returned by GitHub.",
+            "Review issue and pull-request activity when public activity is available.",
+        )
+
+    ages = [
+        _days_since(item.updated_at or item.created_at, now)
+        for item in items
+    ]
+    known_ages = [age for age in ages if age is not None]
+    commented = sum(item.comments > 0 for item in items)
+    recent = sum(age is not None and age <= 30 for age in ages)
+    open_items = [item for item in items if item.state == "open"]
+    open_ages = [
+        _days_since(item.updated_at or item.created_at, now)
+        for item in open_items
+    ]
+    stale_open = sum(age is not None and age > 90 for age in open_ages)
+
+    comment_points = (commented * 4) // len(items)
+    if any(age <= 30 for age in known_ages):
+        freshness_points = 3
+    elif any(age <= 90 for age in known_ages):
+        freshness_points = 2
+    elif any(age <= 365 for age in known_ages):
+        freshness_points = 1
+    else:
+        freshness_points = 0
+
+    if not open_items or stale_open == 0:
+        queue_points = 3
+    else:
+        stale_ratio = stale_open / len(open_items)
+        queue_points = 2 if stale_ratio <= 0.25 else 1 if stale_ratio <= 0.5 else 0
+
+    score = comment_points + freshness_points + queue_points
+    issue_count = sum(item.kind == "issue" for item in items)
+    pull_request_count = sum(item.kind == "pull_request" for item in items)
+    evidence = (
+        f"Sampled items={len(items)}, issues={issue_count}, "
+        f"pull requests={pull_request_count}, comments={commented}/{len(items)}, "
+        f"recently updated <=30d={recent}, stale open={stale_open}."
+    )
+    recommendation = (
+        None
+        if score == 10
+        else "Respond to open issues and pull requests, especially stale items."
+    )
+    return score, evidence, recommendation
+
+
 def analyze_repository(
     snapshot: RepositorySnapshot, now: datetime | None = None
 ) -> AnalysisReport:
@@ -38,13 +93,13 @@ def analyze_repository(
     elif age is None:
         activity_score, activity_evidence = 0, "No push date is available."
     elif age <= 30:
-        activity_score, activity_evidence = 25, f"Last push was {age} days ago."
+        activity_score, activity_evidence = 15, f"Last push was {age} days ago."
     elif age <= 90:
-        activity_score, activity_evidence = 18, f"Last push was {age} days ago."
+        activity_score, activity_evidence = 11, f"Last push was {age} days ago."
     elif age <= 365:
-        activity_score, activity_evidence = 10, f"Last push was {age} days ago."
+        activity_score, activity_evidence = 6, f"Last push was {age} days ago."
     else:
-        activity_score, activity_evidence = 2, f"Last push was {age} days ago."
+        activity_score, activity_evidence = 1, f"Last push was {age} days ago."
 
     has_readme = _file_present(
         snapshot.files, ("readme.md", "readme.rst", "readme.txt", "readme")
@@ -73,15 +128,26 @@ def analyze_repository(
     governance_score = (10 if snapshot.license_name else 0) + (
         5 if has_security else 0
     )
+    responsiveness_score, responsiveness_evidence, responsiveness_recommendation = (
+        _responsiveness(snapshot, now)
+    )
 
     checks = (
         CheckResult(
             "activity",
             "Recent activity",
             activity_score,
-            25,
+            15,
             activity_evidence,
-            None if activity_score >= 18 else "Publish a scoped maintenance update.",
+            None if activity_score >= 11 else "Publish a scoped maintenance update.",
+        ),
+        CheckResult(
+            "responsiveness",
+            "Issue and pull-request responsiveness",
+            responsiveness_score,
+            10,
+            responsiveness_evidence,
+            responsiveness_recommendation,
         ),
         CheckResult(
             "documentation",

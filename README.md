@@ -4,9 +4,10 @@ Repo Health Lens turns public GitHub metadata into a transparent, actionable
 repository health report. It is designed for maintainers, contributors, and
 learners who want more than a mysterious single score.
 
-The first release evaluates six signals:
+The first release evaluates seven signals:
 
 - recent maintenance activity;
+- issue and pull-request responsiveness;
 - discoverability and documentation;
 - contributor readiness;
 - tests and automation;
@@ -43,22 +44,26 @@ The 100 available points are intentionally easy to audit:
 
 | Area | Points |
 |---|---:|
-| Recent activity | 25 |
+| Recent activity | 15 |
+| Issue and pull-request responsiveness | 10 |
 | Discoverability and docs | 20 |
 | Contributor readiness | 15 |
 | Engineering signals | 20 |
 | License and security | 15 |
 | Original project signal | 5 |
 
-This early version only checks repository-level signals. For engineering
-signals, a repository must expose at least one `.yml` or `.yaml` file directly
-under `.github/workflows`; an unrelated `.github` directory is not treated as
-CI. It does not inspect source code, judge the quality of a README, or reward
-stars. Those limitations are deliberate: popularity is not the same as health.
+This early version only checks repository-level signals. For responsiveness, it
+samples up to 100 of the most recently updated issues and pull requests. The
+report uses public comment counts, update age, and stale open work as
+observable activity proxies; it cannot identify whether a comment came from a
+maintainer or measure the quality of a response. For engineering signals, a
+repository must expose at least one `.yml` or `.yaml` file directly under
+`.github/workflows`; an unrelated `.github` directory is not treated as CI. It
+does not inspect source code, judge the quality of a README, or reward stars.
+Those limitations are deliberate: popularity is not the same as health.
 
 ## Roadmap
 
-- report issue and pull-request responsiveness;
 - support saved snapshots and score trends;
 - generate a standalone HTML report;
 - publish a reusable GitHub Action.

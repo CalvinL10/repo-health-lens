@@ -5,6 +5,7 @@ from unittest.mock import patch
 import urllib.error
 
 from repo_health_lens.github import GitHubClient
+from repo_health_lens.models import IssueSummary
 
 
 class FakeResponse:
@@ -52,6 +53,7 @@ class GitHubClientTests(unittest.TestCase):
                 FakeResponse(metadata),
                 FakeResponse(root_contents),
                 FakeResponse(workflow_contents),
+                FakeResponse([]),
             ],
         ):
             snapshot = GitHubClient().snapshot("owner", "repo")
@@ -73,11 +75,77 @@ class GitHubClientTests(unittest.TestCase):
 
         with patch(
             "urllib.request.urlopen",
-            side_effect=[FakeResponse(metadata), FakeResponse([]), not_found],
+            side_effect=[
+                FakeResponse(metadata),
+                FakeResponse([]),
+                not_found,
+                FakeResponse([]),
+            ],
         ):
             snapshot = GitHubClient().snapshot("owner", "repo")
 
         self.assertEqual(snapshot.workflow_files, ())
+
+    def test_snapshot_reads_issue_and_pull_request_activity(self):
+        metadata = {
+            "full_name": "owner/repo",
+            "license": None,
+        }
+        issue_activity = [
+            {
+                "number": 12,
+                "state": "open",
+                "created_at": "2026-07-01T00:00:00Z",
+                "updated_at": "2026-07-10T00:00:00Z",
+                "closed_at": None,
+                "comments": 3,
+            },
+            {
+                "number": 13,
+                "state": "closed",
+                "created_at": "2026-06-01T00:00:00Z",
+                "updated_at": "2026-07-05T00:00:00Z",
+                "closed_at": "2026-07-05T00:00:00Z",
+                "comments": 1,
+                "pull_request": {"url": "https://api.github.com/repos/owner/repo/pulls/13"},
+            },
+            {"number": "invalid"},
+        ]
+
+        with patch(
+            "urllib.request.urlopen",
+            side_effect=[
+                FakeResponse(metadata),
+                FakeResponse([]),
+                FakeResponse([]),
+                FakeResponse(issue_activity),
+            ],
+        ):
+            snapshot = GitHubClient().snapshot("owner", "repo")
+
+        self.assertEqual(
+            snapshot.issue_activity,
+            (
+                IssueSummary(
+                    number=12,
+                    kind="issue",
+                    state="open",
+                    created_at="2026-07-01T00:00:00Z",
+                    updated_at="2026-07-10T00:00:00Z",
+                    closed_at=None,
+                    comments=3,
+                ),
+                IssueSummary(
+                    number=13,
+                    kind="pull_request",
+                    state="closed",
+                    created_at="2026-06-01T00:00:00Z",
+                    updated_at="2026-07-05T00:00:00Z",
+                    closed_at="2026-07-05T00:00:00Z",
+                    comments=1,
+                ),
+            ),
+        )
 
 
 if __name__ == "__main__":

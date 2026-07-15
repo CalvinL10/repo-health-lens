@@ -6,7 +6,7 @@ import urllib.error
 import urllib.request
 from typing import Any
 
-from .models import RepositorySnapshot
+from .models import IssueSummary, RepositorySnapshot
 
 
 class GitHubError(RuntimeError):
@@ -51,6 +51,9 @@ class GitHubClient:
             f"/repos/{owner}/{repo}/contents/.github/workflows",
             allow_not_found=True,
         ) or ()
+        issue_contents = self._get(
+            f"/repos/{owner}/{repo}/issues?state=all&per_page=100&sort=updated&direction=desc"
+        ) or ()
         files = frozenset(
             str(item.get("name", "")).lower()
             for item in contents
@@ -65,6 +68,28 @@ class GitHubClient:
                 and str(item.get("name", "")).lower().endswith((".yml", ".yaml"))
             )
         )
+        issue_activity = []
+        for item in issue_contents:
+            if not isinstance(item, dict):
+                continue
+            try:
+                number = int(item["number"])
+                comments = int(item.get("comments", 0))
+            except (KeyError, TypeError, ValueError):
+                continue
+            issue_activity.append(
+                IssueSummary(
+                    number=number,
+                    kind="pull_request"
+                    if item.get("pull_request") is not None
+                    else "issue",
+                    state=str(item.get("state", "")).lower(),
+                    created_at=item.get("created_at"),
+                    updated_at=item.get("updated_at"),
+                    closed_at=item.get("closed_at"),
+                    comments=max(0, comments),
+                )
+            )
         license_data = metadata.get("license") or {}
         return RepositorySnapshot(
             full_name=metadata["full_name"],
@@ -82,5 +107,6 @@ class GitHubClient:
             has_wiki=bool(metadata.get("has_wiki")),
             files=files,
             workflow_files=workflow_files,
+            issue_activity=tuple(issue_activity),
         )
 

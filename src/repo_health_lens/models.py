@@ -5,6 +5,17 @@ from typing import Any
 
 
 @dataclass(frozen=True)
+class IssueSummary:
+    number: int
+    kind: str
+    state: str
+    created_at: str | None
+    updated_at: str | None
+    closed_at: str | None
+    comments: int
+
+
+@dataclass(frozen=True)
 class RepositorySnapshot:
     full_name: str
     description: str | None
@@ -21,6 +32,7 @@ class RepositorySnapshot:
     has_wiki: bool
     files: frozenset[str]
     workflow_files: tuple[str, ...] = ()
+    issue_activity: tuple[IssueSummary, ...] = ()
 
 
 @dataclass(frozen=True)

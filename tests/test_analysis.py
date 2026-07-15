@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 import unittest
 
 from repo_health_lens.analysis import analyze_repository
-from repo_health_lens.models import RepositorySnapshot
+from repo_health_lens.models import IssueSummary, RepositorySnapshot
 
 
 NOW = datetime(2026, 7, 14, tzinfo=timezone.utc)
@@ -34,6 +34,26 @@ def snapshot(**overrides):
             }
         ),
         "workflow_files": ("ci.yml",),
+        "issue_activity": (
+            IssueSummary(
+                number=1,
+                kind="issue",
+                state="open",
+                created_at="2026-07-01T00:00:00Z",
+                updated_at="2026-07-10T00:00:00Z",
+                closed_at=None,
+                comments=2,
+            ),
+            IssueSummary(
+                number=2,
+                kind="pull_request",
+                state="closed",
+                created_at="2026-06-01T00:00:00Z",
+                updated_at="2026-07-05T00:00:00Z",
+                closed_at="2026-07-05T00:00:00Z",
+                comments=1,
+            ),
+        ),
     }
     values.update(overrides)
     return RepositorySnapshot(**values)
@@ -57,6 +77,7 @@ class AnalysisTests(unittest.TestCase):
                 has_wiki=False,
                 files=frozenset(),
                 workflow_files=(),
+                issue_activity=(),
             ),
             now=NOW,
         )
@@ -82,3 +103,53 @@ class AnalysisTests(unittest.TestCase):
         )
         self.assertEqual(engineering.score, 10)
         self.assertIn("workflow files=0", engineering.evidence)
+
+    def test_recent_commented_issue_and_pr_score_as_responsive(self):
+        report = analyze_repository(snapshot(), now=NOW)
+
+        responsiveness = next(
+            check for check in report.checks if check.key == "responsiveness"
+        )
+
+        self.assertEqual(responsiveness.score, 10)
+        self.assertIsNone(responsiveness.recommendation)
+        self.assertIn("comments=2/2", responsiveness.evidence)
+
+    def test_stale_uncommented_open_work_gets_responsiveness_recommendation(self):
+        report = analyze_repository(
+            snapshot(
+                issue_activity=(
+                    IssueSummary(
+                        number=7,
+                        kind="issue",
+                        state="open",
+                        created_at="2025-01-01T00:00:00Z",
+                        updated_at="2025-01-02T00:00:00Z",
+                        closed_at=None,
+                        comments=0,
+                    ),
+                )
+            ),
+            now=NOW,
+        )
+
+        responsiveness = next(
+            check for check in report.checks if check.key == "responsiveness"
+        )
+
+        self.assertLess(responsiveness.score, 10)
+        self.assertIsNotNone(responsiveness.recommendation)
+        self.assertIn("stale open=1", responsiveness.evidence)
+
+    def test_missing_issue_activity_is_explicitly_unassessed(self):
+        report = analyze_repository(
+            snapshot(issue_activity=()),
+            now=NOW,
+        )
+
+        responsiveness = next(
+            check for check in report.checks if check.key == "responsiveness"
+        )
+
+        self.assertEqual(responsiveness.score, 0)
+        self.assertIn("No issue or pull-request activity", responsiveness.evidence)

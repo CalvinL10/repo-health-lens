@@ -29,4 +29,6 @@ class RenderTests(unittest.TestCase):
         )
         markdown = render_markdown(report)
         self.assertIn("Repository health: owner/repo", markdown)
+        self.assertIn("Issue and pull-request responsiveness", markdown)
+        self.assertIn("No issue or pull-request activity", markdown)
         self.assertIn("Recommended next steps", markdown)
