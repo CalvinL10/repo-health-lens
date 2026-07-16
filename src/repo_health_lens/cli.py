@@ -3,10 +3,14 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from dataclasses import replace
+from datetime import datetime, timezone
+from pathlib import Path
 
 from .analysis import analyze_repository
 from .github import GitHubClient, GitHubError
 from .render import render_markdown
+from .snapshots import SnapshotError, append_report
 
 
 def _repository(value: str) -> tuple[str, str]:
@@ -25,6 +29,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--format", choices=("markdown", "json"), default="markdown"
     )
+    parser.add_argument(
+        "--snapshot",
+        metavar="PATH",
+        help="append the report to a JSON snapshot history and show its trend",
+    )
     return parser
 
 
@@ -33,7 +42,11 @@ def main(argv: list[str] | None = None) -> int:
     owner, repo = args.repository
     try:
         report = analyze_repository(GitHubClient().snapshot(owner, repo))
-    except GitHubError as exc:
+        if args.snapshot:
+            captured_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+            trend = append_report(Path(args.snapshot), report, captured_at)
+            report = replace(report, trend=trend)
+    except (GitHubError, SnapshotError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
     if args.format == "json":

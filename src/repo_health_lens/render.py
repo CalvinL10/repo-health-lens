@@ -17,6 +17,20 @@ def render_markdown(report: AnalysisReport) -> str:
         lines.append(
             f"| {check.label} | {check.score}/{check.max_score} | {evidence} |"
         )
+    if report.trend:
+        lines.extend(
+            [
+                "",
+                f"**Trend: {report.trend.delta:+d} points vs previous snapshot**",
+            ]
+        )
+        changed = [item for item in report.trend.checks if item.delta]
+        if changed:
+            lines.append(
+                "Changed checks: "
+                + "; ".join(f"{item.label}: {item.delta:+d}" for item in changed)
+                + "."
+            )
     recommendations = [
         check.recommendation for check in report.checks if check.recommendation
     ]

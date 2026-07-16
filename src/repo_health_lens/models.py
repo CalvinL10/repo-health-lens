@@ -46,11 +46,30 @@ class CheckResult:
 
 
 @dataclass(frozen=True)
+class CheckTrend:
+    key: str
+    label: str
+    previous_score: int
+    current_score: int
+    delta: int
+
+
+@dataclass(frozen=True)
+class ScoreTrend:
+    previous_captured_at: str
+    previous_score: int
+    current_score: int
+    delta: int
+    checks: tuple[CheckTrend, ...]
+
+
+@dataclass(frozen=True)
 class AnalysisReport:
     repository: str
     score: int
     grade: str
     checks: tuple[CheckResult, ...]
+    trend: ScoreTrend | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
