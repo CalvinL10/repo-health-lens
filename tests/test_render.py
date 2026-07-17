@@ -3,7 +3,7 @@ import unittest
 
 from repo_health_lens.analysis import analyze_repository
 from repo_health_lens.models import CheckTrend, RepositorySnapshot, ScoreTrend
-from repo_health_lens.render import render_markdown
+from repo_health_lens.render import render_html, render_markdown
 
 
 class RenderTests(unittest.TestCase):
@@ -78,3 +78,33 @@ class RenderTests(unittest.TestCase):
 
         self.assertIn("Trend: +4 points vs previous snapshot", markdown)
         self.assertIn("Recent activity: +4", markdown)
+
+    def test_html_report_is_standalone_and_escapes_dynamic_content(self):
+        report = analyze_repository(
+            RepositorySnapshot(
+                full_name="owner/<script>alert(1)</script>",
+                description=None,
+                default_branch="main",
+                archived=False,
+                fork=False,
+                stars=0,
+                forks=0,
+                open_issues=0,
+                pushed_at="2026-01-01T00:00:00Z",
+                created_at="2026-01-01T00:00:00Z",
+                license_name=None,
+                topics=(),
+                has_wiki=False,
+                files=frozenset(),
+            ),
+            now=datetime(2026, 7, 14, tzinfo=timezone.utc),
+        )
+
+        html = render_html(report)
+
+        self.assertTrue(html.startswith("<!doctype html>"))
+        self.assertIn("<style>", html)
+        self.assertIn("Repository health", html)
+        self.assertIn("&lt;script&gt;alert(1)&lt;/script&gt;", html)
+        self.assertNotIn("<script>alert(1)</script>", html)
+        self.assertIn("Recommended next steps", html)

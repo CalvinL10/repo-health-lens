@@ -9,7 +9,7 @@ from pathlib import Path
 
 from .analysis import analyze_repository
 from .github import GitHubClient, GitHubError
-from .render import render_markdown
+from .render import render_html, render_markdown
 from .snapshots import SnapshotError, append_report
 
 
@@ -27,7 +27,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("repository", type=_repository, help="GitHub OWNER/REPOSITORY")
     parser.add_argument(
-        "--format", choices=("markdown", "json"), default="markdown"
+        "--format", choices=("markdown", "json", "html"), default="markdown"
     )
     parser.add_argument(
         "--snapshot",
@@ -51,6 +51,8 @@ def main(argv: list[str] | None = None) -> int:
         return 2
     if args.format == "json":
         print(json.dumps(report.to_dict(), indent=2))
+    elif args.format == "html":
+        print(render_html(report))
     else:
         print(render_markdown(report))
     return 0

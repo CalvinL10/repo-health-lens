@@ -25,6 +25,7 @@ Python 3.10 or newer is required.
 ```bash
 python -m repo_health_lens.cli pallets/flask
 python -m repo_health_lens.cli pallets/flask --format json
+python -m repo_health_lens.cli pallets/flask --format html > report.html
 python -m repo_health_lens.cli pallets/flask --snapshot .repo-health/history.json
 ```
 
@@ -68,9 +69,11 @@ When a previous report for the same repository exists, Markdown and JSON output
 include the total score delta and changed check scores. The history file is
 written atomically and is intended for scheduled local or CI runs.
 
+Pass `--format html` to generate a standalone report with inline CSS. It can be
+saved and opened locally without a server or additional assets.
+
 ## Roadmap
 
-- generate a standalone HTML report;
 - publish a reusable GitHub Action.
 
 ## Responsible use

@@ -9,6 +9,11 @@ class CliTests(unittest.TestCase):
 
         self.assertEqual(args.snapshot, "history.json")
 
+    def test_format_option_accepts_html(self):
+        args = build_parser().parse_args(["owner/repo", "--format", "html"])
+
+        self.assertEqual(args.format, "html")
+
 
 if __name__ == "__main__":
     unittest.main()
