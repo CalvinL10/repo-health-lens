@@ -1,0 +1,68 @@
+name: Repo Health Lens
+description: Generate an explainable GitHub repository health report.
+author: Calvin
+inputs:
+  repository:
+    description: GitHub OWNER/REPOSITORY to analyze.
+    required: false
+    default: ""
+  format:
+    description: Report format: markdown, json, or html.
+    required: false
+    default: markdown
+  snapshot:
+    description: Optional JSON history path for score trends.
+    required: false
+    default: ""
+  output:
+    description: Report path relative to the workspace.
+    required: false
+    default: repo-health-report.md
+  token:
+    description: GitHub token used for API requests.
+    required: false
+    default: ""
+  python-version:
+    description: Python version used to run Repo Health Lens.
+    required: false
+    default: "3.12"
+outputs:
+  score:
+    description: Total health score out of 100.
+    value: ${{ steps.report.outputs.score }}
+  grade:
+    description: Letter grade for the report.
+    value: ${{ steps.report.outputs.grade }}
+  report-path:
+    description: Path of the generated report.
+    value: ${{ steps.report.outputs.report-path }}
+runs:
+  using: composite
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version }}
+    - name: Install Repo Health Lens
+      shell: bash
+      run: python -m pip install --disable-pip-version-check --quiet "$GITHUB_ACTION_PATH"
+    - name: Generate repository health report
+      id: report
+      shell: bash
+      env:
+        ACTION_REPOSITORY: ${{ inputs.repository || github.repository }}
+        ACTION_FORMAT: ${{ inputs.format }}
+        ACTION_SNAPSHOT: ${{ inputs.snapshot }}
+        ACTION_OUTPUT: ${{ inputs.output }}
+        GITHUB_TOKEN: ${{ inputs.token || github.token }}
+      run: |
+        set -euo pipefail
+        arguments=(
+          --repository "$ACTION_REPOSITORY"
+          --format "$ACTION_FORMAT"
+          --output "$ACTION_OUTPUT"
+        )
+        if [[ -n "$ACTION_SNAPSHOT" ]]; then
+          arguments+=(--snapshot "$ACTION_SNAPSHOT")
+        fi
+        python "$GITHUB_ACTION_PATH/scripts/run_action.py" "${arguments[@]}"

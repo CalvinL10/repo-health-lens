@@ -72,9 +72,34 @@ written atomically and is intended for scheduled local or CI runs.
 Pass `--format html` to generate a standalone report with inline CSS. It can be
 saved and opened locally without a server or additional assets.
 
+## GitHub Action
+
+Repo Health Lens is also available as a reusable composite action. It writes a
+report to the workspace and exposes `score`, `grade`, and `report-path` outputs.
+The action does not require a checkout of the repository containing the action:
+
+```yaml
+permissions:
+  contents: read
+
+steps:
+  - uses: CalvinL10/repo-health-lens@main
+    id: health
+    with:
+      repository: pallets/flask
+      format: html
+      output: artifacts/flask-health.html
+  - run: echo "Health score: ${{ steps.health.outputs.score }} (${{ steps.health.outputs.grade }})"
+```
+
+Set `snapshot` to a JSON history path when a workflow should track score trends.
+For private repositories, pass a token with read access through the `token`
+input and grant the workflow only the permissions it needs.
+
 ## Roadmap
 
-- publish a reusable GitHub Action.
+The reusable GitHub Action is now available. Future improvements should be
+proposed as focused issues with explainable, observable scoring criteria.
 
 ## Responsible use
 
