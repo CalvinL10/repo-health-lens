@@ -72,9 +72,31 @@ class ActionTests(unittest.TestCase):
             self.assertEqual(exit_code, 0)
             self.assertEqual(json.loads(report_path.read_text())["score"], 90)
             outputs = output_path.read_text()
-            self.assertIn("score=90", outputs)
-            self.assertIn("grade=A", outputs)
-            self.assertIn(f"report-path={report_path}", outputs)
+            self.assertIn("score<<", outputs)
+            self.assertIn("\n90\n", outputs)
+            self.assertIn("grade<<", outputs)
+            self.assertIn("\nA\n", outputs)
+            self.assertIn("report-path<<", outputs)
+            self.assertIn(f"\n{report_path}\n", outputs)
+
+    def test_action_outputs_keep_multiline_values_as_one_output(self):
+        from scripts import run_action
+
+        with TemporaryDirectory() as directory:
+            output_path = Path(directory) / "github-output"
+            malicious_value = "report.md\nattacker=unexpected"
+            with patch.dict(
+                os.environ, {"GITHUB_OUTPUT": str(output_path)}, clear=False
+            ):
+                run_action._set_output("report-path", malicious_value)
+
+            output = output_path.read_text()
+            lines = output.splitlines()
+            self.assertTrue(lines[0].startswith("report-path<<"))
+            delimiter = lines[0].split("<<", 1)[1]
+            self.assertEqual(lines[1], "report.md")
+            self.assertEqual(lines[2], "attacker=unexpected")
+            self.assertEqual(lines[3], delimiter)
 
     def test_action_manifest_exposes_reusable_report_inputs_and_outputs(self):
         manifest_path = Path("action.yml")

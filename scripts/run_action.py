@@ -4,6 +4,7 @@ import argparse
 import json
 import os
 import sys
+import uuid
 from dataclasses import replace
 from datetime import datetime, timezone
 from pathlib import Path
@@ -25,8 +26,12 @@ def _set_output(name: str, value: object) -> None:
     output_path = os.getenv("GITHUB_OUTPUT")
     if not output_path:
         return
+    value_text = str(value)
+    delimiter = f"repo-health-lens-{uuid.uuid4().hex}"
+    while delimiter in value_text:
+        delimiter = f"repo-health-lens-{uuid.uuid4().hex}"
     with Path(output_path).open("a", encoding="utf-8") as output:
-        output.write(f"{name}={value}\n")
+        output.write(f"{name}<<{delimiter}\n{value_text}\n{delimiter}\n")
 
 
 def _render(report, report_format: str) -> str:
