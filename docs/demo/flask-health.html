@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Repository health: pallets/flask</title>
+<style>
+:root { color-scheme: light; font-family: system-ui, sans-serif; color: #172033; background: #f4f7fb; }
+body { margin: 0; }
+main { max-width: 980px; margin: 0 auto; padding: 3rem 1.25rem; }
+.hero, .check-table, .trend, section { background: #fff; border: 1px solid #dbe3ef; border-radius: 14px; box-shadow: 0 8px 24px #17203312; }
+.hero { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1.5rem; }
+h1, h2 { margin-top: 0; }
+h1 { margin-bottom: .35rem; font-size: clamp(1.5rem, 4vw, 2.4rem); }
+.muted { color: #5d6879; }
+.score-card { min-width: 8rem; padding: 1rem; border-radius: 12px; text-align: center; background: #edf3ff; }
+.score-card strong { display: block; font-size: 2rem; }
+.score { display: inline-block; min-width: 3.5rem; padding: .25rem .5rem; border-radius: 999px; text-align: center; font-weight: 700; }
+.good { color: #075b3d; background: #d8f5e8; }
+.watch { color: #805400; background: #fff0c7; }
+.needs-attention { color: #922b2b; background: #ffe0e0; }
+.check-table { width: 100%; margin: 1.5rem 0; border-collapse: separate; border-spacing: 0; overflow: hidden; }
+.check-table th, .check-table td { padding: 1rem; border-bottom: 1px solid #e6ebf2; text-align: left; vertical-align: top; }
+.check-table th { width: 25%; }
+.check-table tr:last-child th, .check-table tr:last-child td { border-bottom: 0; }
+.recommendation { margin: .65rem 0 0; color: #7b3f00; }
+section { margin-top: 1.5rem; padding: 1.25rem 1.5rem; }
+li + li { margin-top: .45rem; }
+@media (max-width: 650px) { .hero { align-items: flex-start; flex-direction: column; } .score-card { width: 100%; box-sizing: border-box; } .check-table th, .check-table td { display: block; width: auto; } .check-table tr:not(:last-child) td { border-bottom: 0; padding-top: 0; } }
+</style>
+</head>
+<body>
+<main>
+<header class="hero">
+<div><p class="muted">Repo Health Lens report</p><h1>Repository health: pallets/flask</h1><p class="muted">Evidence-backed checks for maintainers and contributors.</p></div>
+<div class="score-card"><span>Score</span><strong>74/100</strong><span>Grade C</span></div>
+</header>
+<table class="check-table">
+<caption class="muted">Health checks and observable evidence</caption>
+<thead><tr><th scope="col">Check</th><th scope="col">Score</th><th scope="col">Evidence</th></tr></thead>
+<tbody><tr><th scope="row">Recent activity</th><td><span class="score watch">11/15</span></td><td>Last push was 39 days ago.</td></tr><tr><th scope="row">Issue and pull-request responsiveness</th><td><span class="score good">8/10</span></td><td>Sampled items=100, issues=27, pull requests=73, comments=50/100, recently updated &lt;=30d=36, stale open=0.<p class="recommendation"><strong>Next step:</strong> Respond to open issues and pull requests, especially stale items.</p></td></tr><tr><th scope="row">Discoverability and docs</th><td><span class="score good">20/20</span></td><td>README=True, description=True, topics=True.</td></tr><tr><th scope="row">Contributor readiness</th><td><span class="score needs-attention">0/15</span></td><td>Contributing=False, conduct=False, wiki=False.<p class="recommendation"><strong>Next step:</strong> Document how contributors can participate.</p></td></tr><tr><th scope="row">Engineering signals</th><td><span class="score good">20/20</span></td><td>Tests=True, workflow files=5.</td></tr><tr><th scope="row">License and security</th><td><span class="score watch">10/15</span></td><td>License=BSD-3-Clause, security policy=False.<p class="recommendation"><strong>Next step:</strong> Add a license and security policy.</p></td></tr><tr><th scope="row">Original project signal</th><td><span class="score good">5/5</span></td><td>Repository is original.</td></tr></tbody>
+</table>
+<section aria-labelledby="recommendations"><h2 id="recommendations">Recommended next steps</h2><ul><li>Respond to open issues and pull requests, especially stale items.</li><li>Document how contributors can participate.</li><li>Add a license and security policy.</li></ul></section>
+
+</main>
+</body>
+</html>

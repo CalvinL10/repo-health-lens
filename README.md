@@ -36,6 +36,12 @@ python -m pip install -e .
 python -m unittest discover -s tests
 ```
 
+To install the first tagged release directly from GitHub:
+
+```bash
+python -m pip install "repo-health-lens @ git+https://github.com/CalvinL10/repo-health-lens.git@v0.1.0"
+```
+
 Unauthenticated requests work for public repositories but are subject to
 GitHub's lower API rate limit. Set `GITHUB_TOKEN` if you need a higher limit.
 The token only needs read access to public repositories.
@@ -72,6 +78,16 @@ written atomically and is intended for scheduled local or CI runs.
 Pass `--format html` to generate a standalone report with inline CSS. It can be
 saved and opened locally without a server or additional assets.
 
+## Demo
+
+Open the [sample HTML report for pallets/flask](docs/demo/flask-health.html)
+to see the standalone output. It is generated from public GitHub metadata and
+can be reproduced with:
+
+```bash
+python -m repo_health_lens.cli pallets/flask --format html > flask-health.html
+```
+
 ## GitHub Action
 
 Repo Health Lens is also available as a reusable composite action. It writes a
@@ -83,7 +99,7 @@ permissions:
   contents: read
 
 steps:
-  - uses: CalvinL10/repo-health-lens@main
+  - uses: CalvinL10/repo-health-lens@v0.1.0
     id: health
     with:
       repository: pallets/flask
@@ -98,8 +114,18 @@ input and grant the workflow only the permissions it needs.
 
 ## Roadmap
 
-The reusable GitHub Action is now available. Future improvements should be
-proposed as focused issues with explainable, observable scoring criteria.
+### v0.1.0
+
+- [x] Explainable repository-level scoring
+- [x] Markdown, JSON, and standalone HTML reports
+- [x] Snapshot history and score trends
+- [x] Reusable GitHub Action with outputs
+
+### Next
+
+Propose focused issues for scoring improvements, release hardening, or new
+observable signals. Each change should define a fair criterion and a testable
+user outcome before implementation.
 
 ## Responsible use
 
