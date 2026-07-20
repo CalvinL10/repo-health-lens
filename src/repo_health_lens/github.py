@@ -5,12 +5,19 @@ import os
 import urllib.error
 import urllib.request
 from typing import Any
+from urllib.parse import quote
 
 from .models import IssueSummary, RepositorySnapshot
 
 
 class GitHubError(RuntimeError):
     """A readable error returned by the GitHub client."""
+
+
+def _repository_path(owner: str, repo: str) -> str:
+    if not owner or not repo:
+        raise ValueError("owner and repository must be non-empty")
+    return f"/repos/{quote(owner, safe='')}/{quote(repo, safe='')}"
 
 
 class GitHubClient:
@@ -45,14 +52,15 @@ class GitHubClient:
             raise GitHubError(f"Could not reach GitHub: {exc.reason}") from exc
 
     def snapshot(self, owner: str, repo: str) -> RepositorySnapshot:
-        metadata = self._get(f"/repos/{owner}/{repo}")
-        contents = self._get(f"/repos/{owner}/{repo}/contents")
+        repository_path = _repository_path(owner, repo)
+        metadata = self._get(repository_path)
+        contents = self._get(f"{repository_path}/contents")
         workflow_contents = self._get(
-            f"/repos/{owner}/{repo}/contents/.github/workflows",
+            f"{repository_path}/contents/.github/workflows",
             allow_not_found=True,
         ) or ()
         issue_contents = self._get(
-            f"/repos/{owner}/{repo}/issues?state=all&per_page=100&sort=updated&direction=desc"
+            f"{repository_path}/issues?state=all&per_page=100&sort=updated&direction=desc"
         ) or ()
         files = frozenset(
             str(item.get("name", "")).lower()

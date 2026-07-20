@@ -23,6 +23,38 @@ class FakeResponse:
 
 
 class GitHubClientTests(unittest.TestCase):
+    def test_snapshot_encodes_repository_path_segments(self):
+        metadata = {"full_name": "owner/repo", "license": None}
+
+        with patch(
+            "urllib.request.urlopen",
+            side_effect=[
+                FakeResponse(metadata),
+                FakeResponse([]),
+                FakeResponse([]),
+                FakeResponse([]),
+            ],
+        ) as urlopen:
+            GitHubClient().snapshot("owner name", "repo?name")
+
+        urls = [call.args[0].full_url for call in urlopen.call_args_list]
+        self.assertTrue(all("/repos/owner%20name/repo%3Fname" in url for url in urls))
+
+    def test_snapshot_rejects_empty_repository_path_segments(self):
+        responses = [
+            FakeResponse({"full_name": "owner/repo", "license": None}),
+            FakeResponse([]),
+            FakeResponse([]),
+            FakeResponse([]),
+        ] * 2
+        with patch("urllib.request.urlopen", side_effect=responses) as urlopen:
+            with self.assertRaises(ValueError):
+                GitHubClient().snapshot("", "repo")
+            with self.assertRaises(ValueError):
+                GitHubClient().snapshot("owner", "")
+
+        urlopen.assert_not_called()
+
     def test_snapshot_reads_workflow_files(self):
         metadata = {
             "full_name": "owner/repo",
