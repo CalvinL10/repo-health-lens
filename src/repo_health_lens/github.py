@@ -39,6 +39,12 @@ class GitHubClient:
         try:
             with urllib.request.urlopen(request, timeout=self.timeout) as response:
                 return json.load(response)
+        except TimeoutError as exc:
+            raise GitHubError(
+                f"GitHub request timed out after {self.timeout} seconds"
+            ) from exc
+        except json.JSONDecodeError as exc:
+            raise GitHubError("GitHub returned invalid JSON") from exc
         except urllib.error.HTTPError as exc:
             if allow_not_found and exc.code == 404:
                 return None

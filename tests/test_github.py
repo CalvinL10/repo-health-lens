@@ -4,7 +4,7 @@ import unittest
 from unittest.mock import patch
 import urllib.error
 
-from repo_health_lens.github import GitHubClient
+from repo_health_lens.github import GitHubClient, GitHubError
 from repo_health_lens.models import IssueSummary
 
 
@@ -22,7 +22,22 @@ class FakeResponse:
         return self.stream.read(*args)
 
 
+class RawResponse(FakeResponse):
+    def __init__(self, payload: bytes):
+        self.stream = io.BytesIO(payload)
+
+
 class GitHubClientTests(unittest.TestCase):
+    def test_snapshot_converts_timeout_to_github_error(self):
+        with patch("urllib.request.urlopen", side_effect=TimeoutError):
+            with self.assertRaisesRegex(GitHubError, "timed out"):
+                GitHubClient(timeout=7).snapshot("owner", "repo")
+
+    def test_snapshot_converts_invalid_json_to_github_error(self):
+        with patch("urllib.request.urlopen", return_value=RawResponse(b"not json")):
+            with self.assertRaisesRegex(GitHubError, "invalid JSON"):
+                GitHubClient().snapshot("owner", "repo")
+
     def test_snapshot_encodes_repository_path_segments(self):
         metadata = {"full_name": "owner/repo", "license": None}
 
