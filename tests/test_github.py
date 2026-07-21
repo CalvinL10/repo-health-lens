@@ -28,6 +28,24 @@ class RawResponse(FakeResponse):
 
 
 class GitHubClientTests(unittest.TestCase):
+    def test_snapshot_explains_rate_limit_exhaustion(self):
+        rate_limited = urllib.error.HTTPError(
+            "https://api.github.com/repos/owner/repo",
+            403,
+            "Forbidden",
+            {
+                "X-RateLimit-Remaining": "0",
+                "X-RateLimit-Reset": "1784559600",
+            },
+            io.BytesIO(b'{"message":"API rate limit exceeded"}'),
+        )
+        with patch("urllib.request.urlopen", side_effect=rate_limited):
+            with self.assertRaisesRegex(
+                GitHubError,
+                "rate limit exceeded.*remaining=0.*GITHUB_TOKEN",
+            ):
+                GitHubClient().snapshot("owner", "repo")
+
     def test_snapshot_converts_timeout_to_github_error(self):
         with patch("urllib.request.urlopen", side_effect=TimeoutError):
             with self.assertRaisesRegex(GitHubError, "timed out"):

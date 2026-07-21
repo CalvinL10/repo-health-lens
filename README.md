@@ -46,6 +46,17 @@ Unauthenticated requests work for public repositories but are subject to
 GitHub's lower API rate limit. Set `GITHUB_TOKEN` if you need a higher limit.
 The token only needs read access to public repositories.
 
+On PowerShell, set the token for the current terminal session without putting
+it in the repository:
+
+```powershell
+$env:GITHUB_TOKEN = "github_pat_your_token"
+python -m repo_health_lens.cli pallets/flask
+```
+
+If the API limit is exhausted, Repo Health Lens reports the remaining quota and
+the UTC reset time. Never commit the token or print it in logs.
+
 ## How scoring works
 
 The 100 available points are intentionally easy to audit:

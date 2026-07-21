@@ -4,6 +4,7 @@ import json
 import os
 import urllib.error
 import urllib.request
+from datetime import datetime, timezone
 from typing import Any
 from urllib.parse import quote
 
@@ -53,6 +54,25 @@ class GitHubClient:
                 message = json.loads(detail).get("message", detail)
             except json.JSONDecodeError:
                 message = detail
+            remaining = exc.headers.get("X-RateLimit-Remaining")
+            rate_limited = (
+                exc.code == 429
+                or remaining == "0"
+                or "rate limit" in str(message).lower()
+            )
+            if rate_limited:
+                reset = exc.headers.get("X-RateLimit-Reset")
+                try:
+                    reset_at = datetime.fromtimestamp(
+                        int(reset), timezone.utc
+                    ).isoformat().replace("+00:00", "Z")
+                except (TypeError, ValueError, OSError, OverflowError):
+                    reset_at = "unknown"
+                message = (
+                    "API rate limit exceeded "
+                    f"(remaining={remaining or 'unknown'}, resets at {reset_at}). "
+                    "Set GITHUB_TOKEN for authenticated quota or retry after reset."
+                )
             raise GitHubError(f"GitHub returned {exc.code}: {message}") from exc
         except urllib.error.URLError as exc:
             raise GitHubError(f"Could not reach GitHub: {exc.reason}") from exc
