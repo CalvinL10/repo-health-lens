@@ -80,9 +80,9 @@ class GitHubClient:
     def snapshot(self, owner: str, repo: str) -> RepositorySnapshot:
         repository_path = _repository_path(owner, repo)
         metadata = self._get(repository_path)
-        contents = self._get(f"{repository_path}/contents")
+        contents = self._get(f"{repository_path}/contents?per_page=100")
         workflow_contents = self._get(
-            f"{repository_path}/contents/.github/workflows",
+            f"{repository_path}/contents/.github/workflows?per_page=100",
             allow_not_found=True,
         ) or ()
         issue_contents = self._get(

@@ -120,10 +120,13 @@ class GitHubClientTests(unittest.TestCase):
                 FakeResponse(workflow_contents),
                 FakeResponse([]),
             ],
-        ):
+        ) as urlopen:
             snapshot = GitHubClient().snapshot("owner", "repo")
 
         self.assertEqual(snapshot.workflow_files, ("ci.yml", "release.yaml"))
+        urls = [call.args[0].full_url for call in urlopen.call_args_list]
+        self.assertIn("/contents?per_page=100", urls[1])
+        self.assertIn("/contents/.github/workflows?per_page=100", urls[2])
 
     def test_snapshot_allows_missing_workflows_directory(self):
         metadata = {
