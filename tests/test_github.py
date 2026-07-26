@@ -128,6 +128,44 @@ class GitHubClientTests(unittest.TestCase):
         self.assertIn("/contents?per_page=100", urls[1])
         self.assertIn("/contents/.github/workflows?per_page=100", urls[2])
 
+    def test_snapshot_reads_all_contents_pages(self):
+        metadata = {"full_name": "owner/repo", "license": None}
+        root_page = [{"name": f"file-{index}.txt"} for index in range(100)]
+        workflow_page = [
+            {"name": f"workflow-{index}.yml", "type": "file"}
+            for index in range(100)
+        ]
+
+        with patch(
+            "urllib.request.urlopen",
+            side_effect=[
+                FakeResponse(metadata),
+                FakeResponse(root_page),
+                FakeResponse([{"name": "README.md"}]),
+                FakeResponse(workflow_page),
+                FakeResponse([{"name": "final.yaml", "type": "file"}]),
+                FakeResponse([]),
+            ],
+        ) as urlopen:
+            snapshot = GitHubClient().snapshot("owner", "repo")
+
+        self.assertIn("readme.md", snapshot.files)
+        self.assertEqual(len(snapshot.workflow_files), 101)
+        urls = [call.args[0].full_url for call in urlopen.call_args_list]
+        self.assertIn("/contents?per_page=100&page=2", urls[2])
+        self.assertIn("/contents/.github/workflows?per_page=100&page=2", urls[4])
+
+    def test_snapshot_rejects_non_list_contents_response(self):
+        with patch(
+            "urllib.request.urlopen",
+            side_effect=[
+                FakeResponse({"full_name": "owner/repo", "license": None}),
+                FakeResponse({"type": "file"}),
+            ],
+        ):
+            with self.assertRaisesRegex(GitHubError, "unexpected contents response"):
+                GitHubClient().snapshot("owner", "repo")
+
     def test_snapshot_allows_missing_workflows_directory(self):
         metadata = {
             "full_name": "owner/repo",

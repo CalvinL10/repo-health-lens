@@ -77,14 +77,31 @@ class GitHubClient:
         except urllib.error.URLError as exc:
             raise GitHubError(f"Could not reach GitHub: {exc.reason}") from exc
 
+    def _get_contents(self, path: str, *, allow_not_found: bool = False) -> tuple[Any, ...]:
+        items: list[Any] = []
+        page = 1
+        while True:
+            page_path = f"{path}?per_page=100"
+            if page > 1:
+                page_path += f"&page={page}"
+            page_items = self._get(page_path, allow_not_found=allow_not_found)
+            if page_items is None:
+                return tuple(items)
+            if not isinstance(page_items, list):
+                raise GitHubError("GitHub returned an unexpected contents response")
+            items.extend(page_items)
+            if len(page_items) < 100:
+                return tuple(items)
+            page += 1
+
     def snapshot(self, owner: str, repo: str) -> RepositorySnapshot:
         repository_path = _repository_path(owner, repo)
         metadata = self._get(repository_path)
-        contents = self._get(f"{repository_path}/contents?per_page=100")
-        workflow_contents = self._get(
-            f"{repository_path}/contents/.github/workflows?per_page=100",
+        contents = self._get_contents(f"{repository_path}/contents")
+        workflow_contents = self._get_contents(
+            f"{repository_path}/contents/.github/workflows",
             allow_not_found=True,
-        ) or ()
+        )
         issue_contents = self._get(
             f"{repository_path}/issues?state=all&per_page=100&sort=updated&direction=desc"
         ) or ()

@@ -78,10 +78,11 @@ observable activity proxies; it cannot identify whether a comment came from a
 maintainer or measure the quality of a response. For engineering signals, a
 repository must expose at least one `.yml` or `.yaml` file directly under
 `.github/workflows`; an unrelated `.github` directory is not treated as CI. The
-root and workflow directory checks request up to 100 entries from GitHub, but
-they do not recursively inspect source code or directories. The report also
-does not judge the quality of a README or reward stars. Those limitations are
-deliberate: popularity is not the same as health.
+root and workflow directory checks read directory entries across 100-entry
+pages, subject to GitHub's Contents API limits, but they do not recursively
+inspect source code or directories. The report also does not judge the quality
+of a README or reward stars. Those limitations are deliberate: popularity is
+not the same as health.
 
 Pass `--snapshot PATH` to append each report to a versioned JSON history file.
 When a previous report for the same repository exists, Markdown and JSON output
