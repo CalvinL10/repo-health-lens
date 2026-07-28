@@ -111,6 +111,16 @@ class ActionTests(unittest.TestCase):
         self.assertIn("using: composite", manifest)
         self.assertIn("scripts/run_action.py", manifest)
 
+    def test_github_actions_dependencies_are_commit_pinned(self):
+        manifest = Path("action.yml").read_text(encoding="utf-8")
+        workflow = Path(".github/workflows/ci.yml").read_text(encoding="utf-8")
+
+        setup_python = "actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065"
+        checkout = "actions/checkout@11d5960a326750d5838078e36cf38b85af677262"
+        self.assertIn(setup_python, manifest)
+        self.assertIn(setup_python, workflow)
+        self.assertIn(checkout, workflow)
+
 
 if __name__ == "__main__":
     unittest.main()
