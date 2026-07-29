@@ -141,23 +141,31 @@ class GitHubClient:
                     comments=max(0, comments),
                 )
             )
-        license_data = metadata.get("license") or {}
-        return RepositorySnapshot(
-            full_name=metadata["full_name"],
-            description=metadata.get("description"),
-            default_branch=metadata.get("default_branch", "main"),
-            archived=bool(metadata.get("archived")),
-            fork=bool(metadata.get("fork")),
-            stars=int(metadata.get("stargazers_count", 0)),
-            forks=int(metadata.get("forks_count", 0)),
-            open_issues=int(metadata.get("open_issues_count", 0)),
-            pushed_at=metadata.get("pushed_at"),
-            created_at=metadata.get("created_at"),
-            license_name=license_data.get("spdx_id"),
-            topics=tuple(metadata.get("topics") or ()),
-            has_wiki=bool(metadata.get("has_wiki")),
-            files=files,
-            workflow_files=workflow_files,
-            issue_activity=tuple(issue_activity),
-        )
+        try:
+            license_data = metadata.get("license") or {}
+            if not isinstance(license_data, dict):
+                raise TypeError("license must be an object")
+            topics = metadata.get("topics") or ()
+            if not isinstance(topics, (list, tuple)):
+                raise TypeError("topics must be a list")
+            return RepositorySnapshot(
+                full_name=metadata["full_name"],
+                description=metadata.get("description"),
+                default_branch=metadata.get("default_branch", "main"),
+                archived=bool(metadata.get("archived")),
+                fork=bool(metadata.get("fork")),
+                stars=int(metadata.get("stargazers_count", 0)),
+                forks=int(metadata.get("forks_count", 0)),
+                open_issues=int(metadata.get("open_issues_count", 0)),
+                pushed_at=metadata.get("pushed_at"),
+                created_at=metadata.get("created_at"),
+                license_name=license_data.get("spdx_id"),
+                topics=tuple(str(topic) for topic in topics),
+                has_wiki=bool(metadata.get("has_wiki")),
+                files=files,
+                workflow_files=workflow_files,
+                issue_activity=tuple(issue_activity),
+            )
+        except (AttributeError, KeyError, TypeError, ValueError) as exc:
+            raise GitHubError("GitHub returned an invalid repository response") from exc
 

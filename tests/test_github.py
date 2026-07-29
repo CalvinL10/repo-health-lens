@@ -56,6 +56,19 @@ class GitHubClientTests(unittest.TestCase):
             with self.assertRaisesRegex(GitHubError, "invalid JSON"):
                 GitHubClient().snapshot("owner", "repo")
 
+    def test_snapshot_converts_invalid_repository_metadata_to_github_error(self):
+        with patch(
+            "urllib.request.urlopen",
+            side_effect=[
+                FakeResponse({"license": [], "topics": "not-a-list"}),
+                FakeResponse([]),
+                FakeResponse([]),
+                FakeResponse([]),
+            ],
+        ):
+            with self.assertRaisesRegex(GitHubError, "invalid repository response"):
+                GitHubClient().snapshot("owner", "repo")
+
     def test_snapshot_encodes_repository_path_segments(self):
         metadata = {"full_name": "owner/repo", "license": None}
 
