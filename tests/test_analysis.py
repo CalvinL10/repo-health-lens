@@ -92,6 +92,32 @@ class AnalysisTests(unittest.TestCase):
         )
         self.assertGreater(recent.score, stale.score)
 
+    def test_invalid_timestamps_are_treated_as_unknown(self):
+        report = analyze_repository(
+            snapshot(
+                pushed_at="not-a-timestamp",
+                issue_activity=(
+                    IssueSummary(
+                        number=9,
+                        kind="issue",
+                        state="open",
+                        created_at="2026-07-01T00:00:00Z",
+                        updated_at="not-a-timestamp",
+                        closed_at=None,
+                        comments=0,
+                    ),
+                ),
+            ),
+            now=NOW,
+        )
+
+        activity = next(check for check in report.checks if check.key == "activity")
+        responsiveness = next(
+            check for check in report.checks if check.key == "responsiveness"
+        )
+        self.assertIn("No push date is available", activity.evidence)
+        self.assertIn("recently updated <=30d=0", responsiveness.evidence)
+
     def test_github_directory_without_workflow_does_not_count_as_ci(self):
         report = analyze_repository(
             snapshot(files=frozenset({".github", "tests"}), workflow_files=()),
