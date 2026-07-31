@@ -179,6 +179,19 @@ class GitHubClientTests(unittest.TestCase):
             with self.assertRaisesRegex(GitHubError, "unexpected contents response"):
                 GitHubClient().snapshot("owner", "repo")
 
+    def test_snapshot_rejects_non_list_issue_response(self):
+        with patch(
+            "urllib.request.urlopen",
+            side_effect=[
+                FakeResponse({"full_name": "owner/repo", "license": None}),
+                FakeResponse([]),
+                FakeResponse([]),
+                FakeResponse({"message": "issues unavailable"}),
+            ],
+        ):
+            with self.assertRaisesRegex(GitHubError, "unexpected issues response"):
+                GitHubClient().snapshot("owner", "repo")
+
     def test_snapshot_allows_missing_workflows_directory(self):
         metadata = {
             "full_name": "owner/repo",

@@ -104,7 +104,9 @@ class GitHubClient:
         )
         issue_contents = self._get(
             f"{repository_path}/issues?state=all&per_page=100&sort=updated&direction=desc"
-        ) or ()
+        )
+        if not isinstance(issue_contents, list):
+            raise GitHubError("GitHub returned an unexpected issues response")
         files = frozenset(
             str(item.get("name", "")).lower()
             for item in contents
