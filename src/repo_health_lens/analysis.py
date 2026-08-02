@@ -19,6 +19,30 @@ def _file_present(files: frozenset[str], names: tuple[str, ...]) -> bool:
     return any(name in files for name in names)
 
 
+def _has_tests(files: frozenset[str]) -> bool:
+    if _file_present(files, ("tests", "test", "spec", "specs")):
+        return True
+    return any(
+        name.startswith(("test_", "test."))
+        or name.endswith(
+            (
+                "_test.py",
+                "_test.go",
+                "_test.rs",
+                ".test.js",
+                ".test.jsx",
+                ".test.ts",
+                ".test.tsx",
+                ".spec.js",
+                ".spec.jsx",
+                ".spec.ts",
+                ".spec.tsx",
+            )
+        )
+        for name in files
+    )
+
+
 def _grade(score: int) -> str:
     if score >= 90:
         return "A"
@@ -113,7 +137,7 @@ def analyze_repository(
     has_code_of_conduct = _file_present(
         snapshot.files, ("code_of_conduct.md", "code-of-conduct.md")
     )
-    has_tests = "tests" in snapshot.files or "test" in snapshot.files
+    has_tests = _has_tests(snapshot.files)
     has_workflows = bool(snapshot.workflow_files)
     has_security = "security.md" in snapshot.files
 

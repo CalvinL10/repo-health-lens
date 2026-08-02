@@ -130,6 +130,21 @@ class AnalysisTests(unittest.TestCase):
         self.assertEqual(engineering.score, 10)
         self.assertIn("workflow files=0", engineering.evidence)
 
+    def test_common_root_test_file_names_count_as_tests(self):
+        report = analyze_repository(
+            snapshot(
+                files=frozenset({"README.md", "test_health.py", "package.json"}),
+                workflow_files=(),
+            ),
+            now=NOW,
+        )
+
+        engineering = next(
+            check for check in report.checks if check.key == "engineering"
+        )
+        self.assertEqual(engineering.score, 10)
+        self.assertIn("Tests=True", engineering.evidence)
+
     def test_recent_commented_issue_and_pr_score_as_responsive(self):
         report = analyze_repository(snapshot(), now=NOW)
 

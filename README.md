@@ -76,8 +76,10 @@ samples up to 100 of the most recently updated issues and pull requests. The
 report uses public comment counts, update age, and stale open work as
 observable activity proxies; it cannot identify whether a comment came from a
 maintainer or measure the quality of a response. For engineering signals, a
-repository must expose at least one `.yml` or `.yaml` file directly under
-`.github/workflows`; an unrelated `.github` directory is not treated as CI. The
+repository must expose a conventional test directory (`test`, `tests`, `spec`,
+or `specs`) or a recognizable root-level test file name, plus at least one
+`.yml` or `.yaml` file directly under `.github/workflows`; an unrelated
+`.github` directory is not treated as CI. The
 root and workflow directory checks read directory entries across 100-entry
 pages, subject to GitHub's Contents API limits, but they do not recursively
 inspect source code or directories. The report also does not judge the quality
