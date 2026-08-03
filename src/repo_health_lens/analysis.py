@@ -22,8 +22,24 @@ def _file_present(files: frozenset[str], names: tuple[str, ...]) -> bool:
 def _has_tests(files: frozenset[str]) -> bool:
     if _file_present(files, ("tests", "test", "spec", "specs")):
         return True
+    supported_extensions = (
+        ".py",
+        ".go",
+        ".rs",
+        ".js",
+        ".jsx",
+        ".ts",
+        ".tsx",
+    )
+    conventional_names = tuple(
+        f"test{extension}" for extension in supported_extensions
+    )
     return any(
-        name.startswith(("test_", "test."))
+        name in conventional_names
+        or (
+            name.startswith("test_")
+            and name.endswith(supported_extensions)
+        )
         or name.endswith(
             (
                 "_test.py",

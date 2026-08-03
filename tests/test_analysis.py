@@ -145,6 +145,21 @@ class AnalysisTests(unittest.TestCase):
         self.assertEqual(engineering.score, 10)
         self.assertIn("Tests=True", engineering.evidence)
 
+    def test_unrelated_root_test_named_file_does_not_count_as_tests(self):
+        report = analyze_repository(
+            snapshot(
+                files=frozenset({"README.md", "test_data.txt", "package.json"}),
+                workflow_files=(),
+            ),
+            now=NOW,
+        )
+
+        engineering = next(
+            check for check in report.checks if check.key == "engineering"
+        )
+        self.assertEqual(engineering.score, 0)
+        self.assertIn("Tests=False", engineering.evidence)
+
     def test_recent_commented_issue_and_pr_score_as_responsive(self):
         report = analyze_repository(snapshot(), now=NOW)
 

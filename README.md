@@ -77,9 +77,10 @@ report uses public comment counts, update age, and stale open work as
 observable activity proxies; it cannot identify whether a comment came from a
 maintainer or measure the quality of a response. For engineering signals, a
 repository must expose a conventional test directory (`test`, `tests`, `spec`,
-or `specs`) or a recognizable root-level test file name, plus at least one
-`.yml` or `.yaml` file directly under `.github/workflows`; an unrelated
-`.github` directory is not treated as CI. The
+or `specs`) or a recognizable root-level Python, Go, Rust, JavaScript, or
+TypeScript test file name (`test_*`, `*_test.*`, `*.test.*`, or `*.spec.*`),
+plus at least one `.yml` or `.yaml` file directly under `.github/workflows`; an
+unrelated `.github` directory is not treated as CI. The
 root and workflow directory checks read directory entries across 100-entry
 pages, subject to GitHub's Contents API limits, but they do not recursively
 inspect source code or directories. The report also does not judge the quality
