@@ -56,7 +56,9 @@ class ActionTests(unittest.TestCase):
             report_path = directory_path / "report.json"
             output_path = directory_path / "github-output"
             with patch.object(run_action, "GitHubClient", FakeClient), patch.dict(
-                os.environ, {"GITHUB_OUTPUT": str(output_path)}, clear=False
+                os.environ,
+                {"GITHUB_OUTPUT": str(output_path), "GITHUB_WORKSPACE": ""},
+                clear=False,
             ):
                 exit_code = run_action.main(
                     [
