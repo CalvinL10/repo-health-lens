@@ -34,6 +34,22 @@ def _set_output(name: str, value: object) -> None:
         output.write(f"{name}<<{delimiter}\n{value_text}\n{delimiter}\n")
 
 
+def _resolve_action_path(value: str) -> Path:
+    """Keep Action-managed files inside the caller's workspace."""
+    workspace = os.getenv("GITHUB_WORKSPACE")
+    path = Path(value)
+    if not workspace:
+        return path
+
+    workspace_path = Path(workspace).resolve()
+    candidate = (workspace_path / path if not path.is_absolute() else path).resolve()
+    try:
+        candidate.relative_to(workspace_path)
+    except ValueError as exc:
+        raise ValueError("action paths must stay inside GITHUB_WORKSPACE") from exc
+    return candidate
+
+
 def _render(report, report_format: str) -> str:
     if report_format == "json":
         return json.dumps(report.to_dict(), indent=2) + "\n"
@@ -45,11 +61,12 @@ def _render(report, report_format: str) -> str:
 def _build_report(
     repository: str, snapshot_path: str | None, token: str | None
 ):
+    snapshot_file = _resolve_action_path(snapshot_path) if snapshot_path else None
     owner, repo = _repository(repository)
     report = analyze_repository(GitHubClient(token=token).snapshot(owner, repo))
-    if snapshot_path:
+    if snapshot_file:
         captured_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
-        trend = append_report(Path(snapshot_path), report, captured_at)
+        trend = append_report(snapshot_file, report, captured_at)
         report = replace(report, trend=trend)
     return report
 
@@ -66,8 +83,8 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     try:
+        output_path = _resolve_action_path(args.output)
         report = _build_report(args.repository, args.snapshot, os.getenv("GITHUB_TOKEN"))
-        output_path = Path(args.output)
         output_path.parent.mkdir(parents=True, exist_ok=True)
         output_path.write_text(_render(report, args.format), encoding="utf-8")
         _set_output("score", report.score)

@@ -128,6 +128,8 @@ steps:
 Set `snapshot` to a JSON history path when a workflow should track score trends.
 For private repositories, pass a token with read access through the `token`
 input and grant the workflow only the permissions it needs.
+The `output` and `snapshot` paths are resolved relative to `GITHUB_WORKSPACE`
+and are rejected if they escape the workspace.
 
 ## Roadmap
 

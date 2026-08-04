@@ -98,6 +98,76 @@ class ActionTests(unittest.TestCase):
             self.assertEqual(lines[2], "attacker=unexpected")
             self.assertEqual(lines[3], delimiter)
 
+    def test_action_rejects_paths_outside_the_workspace(self):
+        from scripts import run_action
+
+        with TemporaryDirectory() as directory:
+            workspace = Path(directory) / "workspace"
+            workspace.mkdir()
+            with patch.dict(os.environ, {"GITHUB_WORKSPACE": str(workspace)}, clear=False):
+                with patch.object(run_action, "_build_report") as build_report:
+                    exit_code = run_action.main(
+                        [
+                            "--repository",
+                            "owner/repo",
+                            "--output",
+                            "../outside/report.md",
+                        ]
+                    )
+
+            self.assertEqual(exit_code, 2)
+            build_report.assert_not_called()
+
+    def test_action_rejects_snapshot_paths_before_api_requests(self):
+        from scripts import run_action
+
+        with TemporaryDirectory() as directory:
+            workspace = Path(directory) / "workspace"
+            workspace.mkdir()
+            with patch.dict(os.environ, {"GITHUB_WORKSPACE": str(workspace)}, clear=False):
+                with patch.object(run_action, "GitHubClient") as client:
+                    with self.assertRaisesRegex(
+                        ValueError, "inside GITHUB_WORKSPACE"
+                    ):
+                        run_action._build_report("owner/repo", "../history.json", None)
+
+            client.assert_not_called()
+
+    def test_action_resolves_relative_paths_from_the_workspace(self):
+        from scripts import run_action
+
+        with TemporaryDirectory() as directory:
+            workspace = Path(directory) / "workspace"
+            workspace.mkdir()
+            report_path = workspace / "artifacts" / "report.json"
+            output_path = workspace / "github-output"
+
+            class FakeClient:
+                def __init__(self, token=None):
+                    self.token = token
+
+                def snapshot(self, owner, repo):
+                    return complete_snapshot()
+
+            with patch.dict(
+                os.environ,
+                {"GITHUB_WORKSPACE": str(workspace), "GITHUB_OUTPUT": str(output_path)},
+                clear=False,
+            ), patch.object(run_action, "GitHubClient", FakeClient):
+                exit_code = run_action.main(
+                    [
+                        "--repository",
+                        "owner/repo",
+                        "--format",
+                        "json",
+                        "--output",
+                        "artifacts/report.json",
+                    ]
+                )
+
+            self.assertEqual(exit_code, 0)
+            self.assertEqual(json.loads(report_path.read_text())["score"], 90)
+
     def test_action_manifest_exposes_reusable_report_inputs_and_outputs(self):
         manifest_path = Path("action.yml")
         if not manifest_path.exists():
