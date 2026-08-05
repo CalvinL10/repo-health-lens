@@ -21,6 +21,16 @@ def _repository_path(owner: str, repo: str) -> str:
     return f"/repos/{quote(owner, safe='')}/{quote(repo, safe='')}"
 
 
+def _recognized_license(license_data: dict[str, Any]) -> str | None:
+    value = license_data.get("spdx_id")
+    if not isinstance(value, str):
+        return None
+    normalized = value.strip()
+    return (
+        normalized if normalized and normalized.upper() != "NOASSERTION" else None
+    )
+
+
 class GitHubClient:
     def __init__(self, token: str | None = None, timeout: int = 15) -> None:
         self.token = token or os.getenv("GITHUB_TOKEN")
@@ -161,7 +171,7 @@ class GitHubClient:
                 open_issues=int(metadata.get("open_issues_count", 0)),
                 pushed_at=metadata.get("pushed_at"),
                 created_at=metadata.get("created_at"),
-                license_name=license_data.get("spdx_id"),
+                license_name=_recognized_license(license_data),
                 topics=tuple(str(topic) for topic in topics),
                 has_wiki=bool(metadata.get("has_wiki")),
                 files=files,

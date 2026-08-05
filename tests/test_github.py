@@ -69,6 +69,25 @@ class GitHubClientTests(unittest.TestCase):
             with self.assertRaisesRegex(GitHubError, "invalid repository response"):
                 GitHubClient().snapshot("owner", "repo")
 
+    def test_snapshot_does_not_treat_noassertion_as_a_recognized_license(self):
+        metadata = {
+            "full_name": "owner/repo",
+            "license": {"spdx_id": "NOASSERTION"},
+        }
+
+        with patch(
+            "urllib.request.urlopen",
+            side_effect=[
+                FakeResponse(metadata),
+                FakeResponse([]),
+                FakeResponse([]),
+                FakeResponse([]),
+            ],
+        ):
+            snapshot = GitHubClient().snapshot("owner", "repo")
+
+        self.assertIsNone(snapshot.license_name)
+
     def test_snapshot_encodes_repository_path_segments(self):
         metadata = {"full_name": "owner/repo", "license": None}
 

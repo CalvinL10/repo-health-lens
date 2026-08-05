@@ -86,6 +86,8 @@ pages, subject to GitHub's Contents API limits, but they do not recursively
 inspect source code or directories. The report also does not judge the quality
 of a README or reward stars. Those limitations are deliberate: popularity is
 not the same as health.
+License points require GitHub to report a recognized SPDX license; an
+`NOASSERTION` response is treated as an unknown license.
 
 Pass `--snapshot PATH` to append each report to a versioned JSON history file.
 When a previous report for the same repository exists, Markdown and JSON output
