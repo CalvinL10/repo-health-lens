@@ -150,15 +150,44 @@ class GitHubClientTests(unittest.TestCase):
                 FakeResponse(metadata),
                 FakeResponse(root_contents),
                 FakeResponse(workflow_contents),
+                FakeResponse([{"name": "SECURITY.md", "type": "file"}]),
                 FakeResponse([]),
             ],
         ) as urlopen:
             snapshot = GitHubClient().snapshot("owner", "repo")
 
         self.assertEqual(snapshot.workflow_files, ("ci.yml", "release.yaml"))
+        self.assertIn("security.md", snapshot.files)
         urls = [call.args[0].full_url for call in urlopen.call_args_list]
         self.assertIn("/contents?per_page=100", urls[1])
         self.assertIn("/contents/.github/workflows?per_page=100", urls[2])
+        self.assertIn("/contents/.github?per_page=100", urls[3])
+
+    def test_snapshot_reads_docs_community_files(self):
+        metadata = {"full_name": "owner/repo", "license": None}
+        root_contents = [{"name": "docs", "type": "dir"}]
+
+        with patch(
+            "urllib.request.urlopen",
+            side_effect=[
+                FakeResponse(metadata),
+                FakeResponse(root_contents),
+                FakeResponse([]),
+                FakeResponse(
+                    [
+                        {"name": "CONTRIBUTING.md", "type": "file"},
+                        {"name": "examples", "type": "dir"},
+                    ]
+                ),
+                FakeResponse([]),
+            ],
+        ) as urlopen:
+            snapshot = GitHubClient().snapshot("owner", "repo")
+
+        self.assertIn("contributing.md", snapshot.files)
+        self.assertNotIn("examples", snapshot.files)
+        urls = [call.args[0].full_url for call in urlopen.call_args_list]
+        self.assertIn("/contents/docs?per_page=100", urls[3])
 
     def test_snapshot_reads_all_contents_pages(self):
         metadata = {"full_name": "owner/repo", "license": None}

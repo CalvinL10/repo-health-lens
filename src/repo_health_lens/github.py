@@ -112,6 +112,17 @@ class GitHubClient:
             f"{repository_path}/contents/.github/workflows",
             allow_not_found=True,
         )
+        root_directories = {
+            str(item.get("name", "")).lower()
+            for item in contents
+            if isinstance(item, dict) and item.get("type") == "dir"
+        }
+        community_contents = []
+        for directory in (".github", "docs"):
+            if directory in root_directories:
+                community_contents.extend(
+                    self._get_contents(f"{repository_path}/contents/{directory}")
+                )
         issue_contents = self._get(
             f"{repository_path}/issues?state=all&per_page=100&sort=updated&direction=desc"
         )
@@ -119,8 +130,8 @@ class GitHubClient:
             raise GitHubError("GitHub returned an unexpected issues response")
         files = frozenset(
             str(item.get("name", "")).lower()
-            for item in contents
-            if isinstance(item, dict)
+            for item in (*contents, *community_contents)
+            if isinstance(item, dict) and item.get("type") != "dir"
         )
         workflow_files = tuple(
             sorted(
