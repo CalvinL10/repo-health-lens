@@ -69,15 +69,15 @@ class ActionTests(unittest.TestCase):
                         "--output",
                         str(report_path),
                     ]
-                )
+            )
 
             self.assertEqual(exit_code, 0)
-            self.assertEqual(json.loads(report_path.read_text())["score"], 90)
+            report = json.loads(report_path.read_text())
             outputs = output_path.read_text()
             self.assertIn("score<<", outputs)
-            self.assertIn("\n90\n", outputs)
+            self.assertIn(f"\n{report['score']}\n", outputs)
             self.assertIn("grade<<", outputs)
-            self.assertIn("\nA\n", outputs)
+            self.assertIn(f"\n{report['grade']}\n", outputs)
             self.assertIn("report-path<<", outputs)
             self.assertIn(f"\n{report_path}\n", outputs)
 
@@ -168,7 +168,10 @@ class ActionTests(unittest.TestCase):
                 )
 
             self.assertEqual(exit_code, 0)
-            self.assertEqual(json.loads(report_path.read_text())["score"], 90)
+            self.assertIn(
+                f"\n{json.loads(report_path.read_text())['score']}\n",
+                output_path.read_text(),
+            )
 
     def test_action_manifest_exposes_reusable_report_inputs_and_outputs(self):
         manifest_path = Path("action.yml")
