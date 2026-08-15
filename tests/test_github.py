@@ -163,6 +163,31 @@ class GitHubClientTests(unittest.TestCase):
         self.assertIn("/contents/.github/workflows?per_page=100", urls[2])
         self.assertIn("/contents/.github?per_page=100", urls[3])
 
+    def test_snapshot_preserves_root_test_directories_and_files(self):
+        metadata = {"full_name": "owner/repo", "license": None}
+        root_contents = [
+            {"name": "tests", "type": "dir"},
+            {"name": "README.md", "type": "file"},
+            {"name": "test_health.py", "type": "file"},
+        ]
+
+        with patch(
+            "urllib.request.urlopen",
+            side_effect=[
+                FakeResponse(metadata),
+                FakeResponse(root_contents),
+                FakeResponse([]),
+                FakeResponse([]),
+            ],
+        ):
+            snapshot = GitHubClient().snapshot("owner", "repo")
+
+        self.assertEqual(snapshot.root_directories, frozenset({"tests"}))
+        self.assertEqual(
+            snapshot.root_files, frozenset({"readme.md", "test_health.py"})
+        )
+        self.assertIn("test_health.py", snapshot.files)
+
     def test_snapshot_reads_docs_community_files(self):
         metadata = {"full_name": "owner/repo", "license": None}
         root_contents = [{"name": "docs", "type": "dir"}]

@@ -33,6 +33,8 @@ class RepositorySnapshot:
     files: frozenset[str]
     workflow_files: tuple[str, ...] = ()
     issue_activity: tuple[IssueSummary, ...] = ()
+    root_directories: frozenset[str] | None = None
+    root_files: frozenset[str] | None = None
 
 
 @dataclass(frozen=True)

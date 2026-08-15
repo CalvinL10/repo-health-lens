@@ -145,6 +145,40 @@ class AnalysisTests(unittest.TestCase):
         self.assertEqual(engineering.score, 10)
         self.assertIn("Tests=True", engineering.evidence)
 
+    def test_conventional_root_test_directory_counts_as_tests(self):
+        report = analyze_repository(
+            snapshot(
+                files=frozenset({"README.md"}),
+                root_directories=frozenset({"tests"}),
+                root_files=frozenset({"README.md"}),
+                workflow_files=(),
+            ),
+            now=NOW,
+        )
+
+        engineering = next(
+            check for check in report.checks if check.key == "engineering"
+        )
+        self.assertEqual(engineering.score, 10)
+        self.assertIn("Tests=True", engineering.evidence)
+
+    def test_community_test_file_does_not_count_as_root_test_file(self):
+        report = analyze_repository(
+            snapshot(
+                files=frozenset({"README.md", "test_health.py"}),
+                root_directories=frozenset({"docs"}),
+                root_files=frozenset(),
+                workflow_files=(),
+            ),
+            now=NOW,
+        )
+
+        engineering = next(
+            check for check in report.checks if check.key == "engineering"
+        )
+        self.assertEqual(engineering.score, 0)
+        self.assertIn("Tests=False", engineering.evidence)
+
     def test_unrelated_root_test_named_file_does_not_count_as_tests(self):
         report = analyze_repository(
             snapshot(

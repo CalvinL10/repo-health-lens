@@ -19,9 +19,21 @@ def _file_present(files: frozenset[str], names: tuple[str, ...]) -> bool:
     return any(name in files for name in names)
 
 
-def _has_tests(files: frozenset[str]) -> bool:
-    if _file_present(files, ("tests", "test", "spec", "specs")):
+def _has_tests(
+    files: frozenset[str],
+    root_directories: frozenset[str] | None = None,
+    root_files: frozenset[str] | None = None,
+) -> bool:
+    test_directories = (
+        root_directories
+        if root_directories is not None
+        else frozenset(
+            name for name in files if name in ("tests", "test", "spec", "specs")
+        )
+    )
+    if _file_present(test_directories, ("tests", "test", "spec", "specs")):
         return True
+    candidate_files = files if root_files is None else root_files
     supported_extensions = (
         ".py",
         ".go",
@@ -55,7 +67,7 @@ def _has_tests(files: frozenset[str]) -> bool:
                 ".spec.tsx",
             )
         )
-        for name in files
+        for name in candidate_files
     )
 
 
@@ -153,7 +165,9 @@ def analyze_repository(
     has_code_of_conduct = _file_present(
         snapshot.files, ("code_of_conduct.md", "code-of-conduct.md")
     )
-    has_tests = _has_tests(snapshot.files)
+    has_tests = _has_tests(
+        snapshot.files, snapshot.root_directories, snapshot.root_files
+    )
     has_workflows = bool(snapshot.workflow_files)
     has_security = "security.md" in snapshot.files
 

@@ -117,6 +117,11 @@ class GitHubClient:
             for item in contents
             if isinstance(item, dict) and item.get("type") == "dir"
         }
+        root_files = frozenset(
+            str(item.get("name", "")).lower()
+            for item in contents
+            if isinstance(item, dict) and item.get("type") == "file"
+        )
         community_contents = []
         for directory in (".github", "docs"):
             if directory in root_directories:
@@ -188,6 +193,8 @@ class GitHubClient:
                 files=files,
                 workflow_files=workflow_files,
                 issue_activity=tuple(issue_activity),
+                root_directories=frozenset(root_directories),
+                root_files=root_files,
             )
         except (AttributeError, KeyError, TypeError, ValueError) as exc:
             raise GitHubError("GitHub returned an invalid repository response") from exc
