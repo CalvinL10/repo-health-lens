@@ -214,9 +214,33 @@ class GitHubClientTests(unittest.TestCase):
         urls = [call.args[0].full_url for call in urlopen.call_args_list]
         self.assertIn("/contents/docs?per_page=100", urls[3])
 
+    def test_snapshot_ignores_submodules_as_community_files(self):
+        metadata = {"full_name": "owner/repo", "license": None}
+        root_contents = [
+            {"name": "README.md", "type": "submodule"},
+            {"name": ".github", "type": "dir"},
+        ]
+
+        with patch(
+            "urllib.request.urlopen",
+            side_effect=[
+                FakeResponse(metadata),
+                FakeResponse(root_contents),
+                FakeResponse([]),
+                FakeResponse([{"name": "SECURITY.md", "type": "submodule"}]),
+                FakeResponse([]),
+            ],
+        ):
+            snapshot = GitHubClient().snapshot("owner", "repo")
+
+        self.assertNotIn("readme.md", snapshot.files)
+        self.assertNotIn("security.md", snapshot.files)
+
     def test_snapshot_reads_all_contents_pages(self):
         metadata = {"full_name": "owner/repo", "license": None}
-        root_page = [{"name": f"file-{index}.txt"} for index in range(100)]
+        root_page = [
+            {"name": f"file-{index}.txt", "type": "file"} for index in range(100)
+        ]
         workflow_page = [
             {"name": f"workflow-{index}.yml", "type": "file"}
             for index in range(100)
@@ -227,7 +251,7 @@ class GitHubClientTests(unittest.TestCase):
             side_effect=[
                 FakeResponse(metadata),
                 FakeResponse(root_page),
-                FakeResponse([{"name": "README.md"}]),
+                FakeResponse([{"name": "README.md", "type": "file"}]),
                 FakeResponse(workflow_page),
                 FakeResponse([{"name": "final.yaml", "type": "file"}]),
                 FakeResponse([]),

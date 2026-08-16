@@ -85,7 +85,8 @@ root, `.github`, `docs`, and workflow directory checks read entries across
 100-entry pages, subject to GitHub's Contents API limits, but they do not
 recursively inspect source code or directories. Standard README, contributing,
 code-of-conduct, and security files found directly in `.github` or `docs` count
-the same as root files. The report also does not judge the quality
+the same as root files; regular files and symlinks count, while Git submodules
+do not. The report also does not judge the quality
 of a README or reward stars. Those limitations are deliberate: popularity is
 not the same as health.
 License points require GitHub to report a recognized SPDX license; an

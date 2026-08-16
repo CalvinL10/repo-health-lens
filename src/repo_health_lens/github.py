@@ -15,6 +15,9 @@ class GitHubError(RuntimeError):
     """A readable error returned by the GitHub client."""
 
 
+_FILE_LIKE_CONTENT_TYPES = frozenset(("file", "symlink"))
+
+
 def _repository_path(owner: str, repo: str) -> str:
     if not owner or not repo:
         raise ValueError("owner and repository must be non-empty")
@@ -136,7 +139,7 @@ class GitHubClient:
         files = frozenset(
             str(item.get("name", "")).lower()
             for item in (*contents, *community_contents)
-            if isinstance(item, dict) and item.get("type") != "dir"
+            if isinstance(item, dict) and item.get("type") in _FILE_LIKE_CONTENT_TYPES
         )
         workflow_files = tuple(
             sorted(
