@@ -169,6 +169,7 @@ class GitHubClientTests(unittest.TestCase):
             {"name": "tests", "type": "dir"},
             {"name": "README.md", "type": "file"},
             {"name": "test_health.py", "type": "file"},
+            {"name": "test_link.py", "type": "symlink"},
         ]
 
         with patch(
@@ -184,9 +185,11 @@ class GitHubClientTests(unittest.TestCase):
 
         self.assertEqual(snapshot.root_directories, frozenset({"tests"}))
         self.assertEqual(
-            snapshot.root_files, frozenset({"readme.md", "test_health.py"})
+            snapshot.root_files,
+            frozenset({"readme.md", "test_health.py", "test_link.py"}),
         )
         self.assertIn("test_health.py", snapshot.files)
+        self.assertIn("test_link.py", snapshot.files)
 
     def test_snapshot_reads_docs_community_files(self):
         metadata = {"full_name": "owner/repo", "license": None}

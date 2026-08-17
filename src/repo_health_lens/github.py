@@ -123,7 +123,7 @@ class GitHubClient:
         root_files = frozenset(
             str(item.get("name", "")).lower()
             for item in contents
-            if isinstance(item, dict) and item.get("type") == "file"
+            if isinstance(item, dict) and item.get("type") in _FILE_LIKE_CONTENT_TYPES
         )
         community_contents = []
         for directory in (".github", "docs"):
