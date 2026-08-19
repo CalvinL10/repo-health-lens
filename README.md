@@ -18,28 +18,58 @@ Every point is backed by visible evidence, and every weak area produces a
 specific next step. The score is a conversation starter, not a claim about code
 quality or maintainer competence.
 
+## Who it is for
+
+Repo Health Lens is for:
+
+- maintainers doing a lightweight weekly review of a public repository;
+- contributors who want evidence before suggesting documentation, testing, or
+  community-process improvements;
+- teams that want a readable report artifact from GitHub Actions without
+  turning the score into a merge gate.
+
+It answers one narrow question: **which observable repository-level signals are
+healthy, which need attention, and what is the next practical action?** It does
+not review source-code quality, maintainer competence, or project popularity.
+
 ## Quick start
 
 Python 3.10 or newer is required.
 
-```bash
-python -m repo_health_lens.cli pallets/flask
-python -m repo_health_lens.cli pallets/flask --format json
-python -m repo_health_lens.cli pallets/flask --format html > report.html
-python -m repo_health_lens.cli pallets/flask --snapshot .repo-health/history.json
-```
-
-For local development:
+Install from a local checkout:
 
 ```bash
 python -m pip install -e .
-python -m unittest discover -s tests
 ```
 
-To install the first tagged release directly from GitHub:
+Or install the first tagged release directly from GitHub:
 
 ```bash
 python -m pip install "repo-health-lens @ git+https://github.com/CalvinL10/repo-health-lens.git@v0.1.0"
+```
+
+Run a report by replacing `OWNER/REPOSITORY` with the public GitHub repository
+you want to inspect:
+
+```bash
+repo-health-lens pallets/flask
+repo-health-lens pallets/flask --format json
+repo-health-lens pallets/flask --format html > report.html
+repo-health-lens pallets/flask --snapshot .repo-health/history.json
+```
+
+The same commands work with `python -m repo_health_lens.cli` when running from
+an installed checkout. The Markdown report gives you the complete path:
+`OWNER/REPOSITORY` → public GitHub evidence → per-check scores → total grade →
+recommended next steps. JSON is for automation, while HTML is a standalone
+file you can open or attach to an issue. Snapshot history adds the score delta
+and changed checks on later runs.
+
+For local development, the editable install above is enough; the test suite
+can be run with:
+
+```bash
+python -m unittest discover -s tests
 ```
 
 Unauthenticated requests work for public repositories but are subject to
@@ -109,6 +139,27 @@ can be reproduced with:
 ```bash
 python -m repo_health_lens.cli pallets/flask --format html > flask-health.html
 ```
+
+## Three practical workflows
+
+### Weekly maintainer review
+
+Run the Markdown report with `--snapshot` for the repository you maintain.
+Review the evidence behind each check, then use the recommended next steps to
+choose one small follow-up rather than treating the total as a verdict.
+
+### Contributor or project triage
+
+Generate the HTML report for a project you are considering contributing to.
+Use the evidence to distinguish missing contributor guidance, tests, or CI from
+signals that are simply not observable through the public GitHub API.
+
+### Scheduled team report
+
+Use the GitHub Action to publish a Markdown or HTML artifact on a schedule.
+Read `score`, `grade`, and `report-path` as workflow outputs, but keep the
+Action informational: this v0.1 score is not a quality gate and should not
+block merges by itself.
 
 ## GitHub Action
 
