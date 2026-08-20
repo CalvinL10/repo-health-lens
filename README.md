@@ -179,6 +179,11 @@ steps:
       format: html
       output: artifacts/flask-health.html
   - run: echo "Health score: ${{ steps.health.outputs.score }} (${{ steps.health.outputs.grade }})"
+  - name: Upload the report
+    uses: actions/upload-artifact@v4
+    with:
+      name: repo-health-lens-report
+      path: artifacts/flask-health.html
 ```
 
 Set `snapshot` to a JSON history path when a workflow should track score trends.
@@ -186,6 +191,9 @@ For private repositories, pass a token with read access through the `token`
 input and grant the workflow only the permissions it needs.
 The `output` and `snapshot` paths are resolved relative to `GITHUB_WORKSPACE`
 and are rejected if they escape the workspace.
+The health action writes the report into the workflow workspace; the upload
+step above keeps it available as a downloadable workflow artifact after the
+job finishes.
 
 ## Roadmap
 
