@@ -42,11 +42,15 @@ Install from a local checkout:
 python -m pip install -e .
 ```
 
-Or install the first tagged release directly from GitHub:
+Or install the current packaged code directly from GitHub:
 
 ```bash
-python -m pip install "repo-health-lens @ git+https://github.com/CalvinL10/repo-health-lens.git@v0.1.0"
+python -m pip install "repo-health-lens @ git+https://github.com/CalvinL10/repo-health-lens.git@main"
 ```
+
+The `main` ref is used here because the v0.1.0 tag has not been published
+yet. Once that release is tagged, pin the command to `@v0.1.0` when you need a
+fixed release rather than the latest packaging changes.
 
 Run a report by replacing `OWNER/REPOSITORY` with the public GitHub repository
 you want to inspect:
@@ -166,13 +170,16 @@ block merges by itself.
 Repo Health Lens is also available as a reusable composite action. It writes a
 report to the workspace and exposes `score`, `grade`, and `report-path` outputs.
 The action does not require a checkout of the repository containing the action:
+The example uses `@main` because the v0.1.0 tag has not been published yet;
+replace it with `@v0.1.0` once that release is tagged when you need a fixed
+action version.
 
 ```yaml
 permissions:
   contents: read
 
 steps:
-  - uses: CalvinL10/repo-health-lens@v0.1.0
+  - uses: CalvinL10/repo-health-lens@main
     id: health
     with:
       repository: pallets/flask
